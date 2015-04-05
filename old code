@@ -1,0 +1,305 @@
+Random code:
+
+// for (Map.Entry<String, Integer> pixel : sortedPixels) { // for each pixel in county
+		// 	boolean withinRange = false;
+			
+		// 	// get it's x and y coordinates
+		// 	String[] rawData = pixel.getKey().split(", ");
+		// 	int i = Integer.parseInt(rawData[0].trim());
+		// 	int j = Integer.parseInt(rawData[1].trim());
+
+		// 	// check to see if in range of any already-made stations
+		// 	for (Station station : countyStations) {
+		// 		withinRange = station.withinRange(i, j);
+
+		// 		if (withinRange) {
+		// 			station.add(i, j);
+		// 			break;
+		// 		}
+		// 	}
+
+		// 	// if not in range of any already-made stations
+		// 	if (withinRange == false) {
+		// 		Station nStation = new Station(i, j);
+		// 		countyStations.add(nStation);
+		// 	}
+		// }
+
+
+
+
+
+
+
+
+
+
+		String pixel = i + ", " + j;
+		Station station = new Station(i, j);
+		count++;
+
+		// base cases
+		if (countyStations.contains(station)) return; // if station was already created, stop
+		if (!countyPixels.contains(pixel)) return; // if pixel is not within county, stop
+
+		// check if within range pixels are also within county
+		int x = i+1;
+		pixel = x + ", " + j;
+		if (station.withinRange(x, j) && countyPixels.contains(pixel))
+			station.add(x, j);
+
+		x = i-1;
+		pixel = x + ", " + j;
+		if (station.withinRange(x, j) && countyPixels.contains(pixel))
+			station.add(x, j);
+
+		int y = j+1;
+		pixel = i + ", " + y;
+		if (station.withinRange(i, y) && countyPixels.contains(pixel))
+			station.add(i, y);
+
+		y = j-1;
+		pixel = i + ", " + y;
+		if (station.withinRange(i, y) && countyPixels.contains(pixel))
+			station.add(i, y);
+
+		// otherwise, add to list of stations made
+		countyStations.add(station);
+		
+		// recursively find the remaining stations
+		makeStations(i+1, j+2, countyPixels);
+		makeStations(i+2, j-1, countyPixels);
+		makeStations(i-1, j-2, countyPixels);
+		makeStations(i-2, j+1, countyPixels);
+
+
+
+
+
+
+		String pixel = i + ", " + j;
+		int x = i-offsetX;
+		int y = j-offsetY;
+
+
+		if (!countyPixels.contains(pixel)) return;
+		if (x >= X || x < 0) return;
+		if (y >= Y || y < 0) return;
+		if (visited[x][y]) return;
+
+count++;
+		// check if any of the surrounding is a station.. if so, this is not the center of a station
+		boolean thisIsStation = true;
+
+		if (countyStations.contains(new Station(i, j+1))) thisIsStation = false;
+		if (countyStations.contains(new Station(i+1, j+1))) thisIsStation = false;
+		if (countyStations.contains(new Station(i+1, j))) thisIsStation = false;
+		if (countyStations.contains(new Station(i+1, j-1))) thisIsStation = false;
+		if (countyStations.contains(new Station(i, j-1))) thisIsStation = false;
+		if (countyStations.contains(new Station(i-1, j-1))) thisIsStation = false;
+		if (countyStations.contains(new Station(i-1, j))) thisIsStation = false;
+		if (countyStations.contains(new Station(i-1, j+1))) thisIsStation = false;
+
+		// if this qualifies as a station
+		if (thisIsStation) {
+
+			// update visited array
+			visited[x][y] = true;
+			if (x < X && x >= 0 && (y+1) >= 0 && (y+1) < Y)
+				visited[x][y+1] = true;
+			if ((x+1) < X && (x+1) >= 0 && y >= 0 && y < Y)
+				visited[x+1][y] = true;
+			if (x < X && x >= 0 && (y-1) >= 0 && (y-1) < Y)
+				visited[x][y-1] = true;
+			if ((x-1) < X && (x-1) >= 0 && y >= 0 && y < Y)
+				visited[x-1][y] = true;
+
+			Station station = new Station(i, j);
+
+			int y1 = j+1;
+			pixel = i + ", " + y1;
+			if (station.withinRange(i, y1) && countyPixels.contains(pixel))
+				station.add(i, y1);
+
+			int x1 = i+1;
+			pixel = x1 + ", " + j;
+			if (station.withinRange(x1, j) && countyPixels.contains(pixel))
+				station.add(x1, j);
+
+			y1 = j-1;
+			pixel = i + ", " + y1;
+			if (station.withinRange(i, y1) && countyPixels.contains(pixel))
+				station.add(i, y1);
+
+			x1 = i-1;
+			pixel = x1 + ", " + j;
+			if (station.withinRange(x1, j) && countyPixels.contains(pixel))
+				station.add(x1, j);
+
+			countyStations.add(station);
+
+			makeStations(i+1, j+1, countyPixels, offsetX, offsetY);
+			makeStations(i+1, j-1, countyPixels, offsetX, offsetY);
+			makeStations(i-1, j-1, countyPixels, offsetX, offsetY);
+			makeStations(i-1, j+1, countyPixels, offsetX, offsetY);
+		}
+
+		else {
+			if (x < X && x >= 0 && (y+1) >= 0 && (y+1) < Y)
+				if (!visited[x][y+1])
+					makeStations(i, j+1, countyPixels, offsetX, offsetY);
+			if ((x+1) < X && (x+1) >= 0 && y >= 0 && y < Y)
+				if (!visited[x+1][y])
+					makeStations(i+1, j, countyPixels, offsetX, offsetY);
+			if (x < X && x >= 0 && (y-1) >= 0 && (y-1) < Y)
+				if (!visited[x][y-1])
+					makeStations(i, j-1, countyPixels, offsetX, offsetY);
+			if ((x-1) < X && (x-1) >= 0 && y >= 0 && y < Y)
+				if (!visited[x-1][y])
+					makeStations(i-1, j, countyPixels, offsetX, offsetY);
+		}
+
+		return;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		public static void makeStations(int i, int j, Set<String> countyPixels) {
+		String pixel = i + ", " + j;
+
+		// base cases
+		if (!countyPixels.contains(pixel)) { // if pixel is out of county bounds
+			int x = i+1;
+			pixel = x + ", " + j;
+			if (countyPixels.contains(pixel)) {
+				Station station = new Station(x, j);
+				countyStations.add(station);
+			}
+
+			x = i-1;
+			pixel = x + ", " + j;
+			if (countyPixels.contains(pixel)) {
+				Station station = new Station(x, j);
+				countyStations.add(station);
+			}
+
+			int y = j+1;
+			pixel = i + ", " + y;
+			if (countyPixels.contains(pixel)) {
+				Station station = new Station(i, y);
+				countyStations.add(station);
+			}
+
+			y = j-1;
+			pixel = i + ", " + y;
+			if (countyPixels.contains(pixel)) {
+				Station station = new Station(x, j);
+				countyStations.add(station);
+			}
+
+			return;
+		}
+
+		for (Station station : countyStations) {
+			if (station.contains(i, j)) return; // if pixel is already in another station
+		}
+
+		Station station = new Station(i, j);
+		
+		// add NESW pixels to station if applicable
+		int x = i+1;
+		pixel = x + ", " + j;
+		if (station.withinRange(x, j) && countyPixels.contains(pixel))
+			station.add(x, j);
+
+		x = i-1;
+		pixel = x + ", " + j;
+		if (station.withinRange(x, j) && countyPixels.contains(pixel))
+			station.add(x, j);
+
+		int y = j+1;
+		pixel = i + ", " + y;
+		if (station.withinRange(i, y) && countyPixels.contains(pixel))
+			station.add(i, y);
+
+		y = j-1;
+		pixel = i + ", " + y;
+		if (station.withinRange(i, y) && countyPixels.contains(pixel))
+			station.add(i, y);
+
+		// add station to final list
+		countyStations.add(station);
+
+		// recursively find other stations
+		makeStations(i+1, j+2, countyPixels);
+		makeStations(i+2, j-1, countyPixels);
+		makeStations(i-1, j-2, countyPixels);
+		makeStations(i-2, j+1, countyPixels);
+
+	}
+
+
+
+-------------------
+
+	// save each new pixel keep track of how many departures leave from each pixel
+				int i = Integer.parseInt(rawData[5]);
+				int j = Integer.parseInt(rawData[4]);
+
+				if (i >= maxX && j >= maxY) {
+					maxX = i;
+					maxY = j;
+				}
+
+				if (i <= minX && j <= minY) {
+					minX = i;
+					minY = j;
+				}
+
+				String pixel = i + ", " + j;
+				int count = 1;
+				if (stationPixels.containsKey(pixel)) {
+					count = stationPixels.get(pixel);
+					count++;
+				}
+
+				stationPixels.put(pixel, count);
+
+				X = maxX - minX;
+		Y = maxY - minY;
+		visited = new boolean[X][Y];
+
+		List<Map.Entry<String, Integer>> sortedPixels = new ArrayList<Map.Entry<String, Integer>>(stationPixels.entrySet());
+
+		// sort list of pixels by number of departures
+		Collections.sort(sortedPixels, 
+			new Comparator<Map.Entry<String,Integer>>() {
+		        @Override
+		        public int compare(Map.Entry<String,Integer> e1, Map.Entry<String,Integer> e2) {
+		            return e2.getValue().compareTo(e1.getValue());
+		        }
+		    }
+		);
+
+		// AT SOME POINT PRINT INFORMATION ABOUT DEPARTURES IN EACH PIXEL, AND TOP 10 ORIGINATING PIXELS, EXPECTED NUMBER OF DEPARTURES PER PIXEL..?
+		
+		String[] topPixel = sortedPixels.get(0).getKey().split(", ");
+		int x = Integer.parseInt(topPixel[0]);
+		int y = Integer.parseInt(topPixel[1]);
+
+		System.out.println(stationPixels.keySet().size());
+		makeStations(x, y, stationPixels.keySet());
+		System.out.println(count);
+		System.out.println(countyStations.size());

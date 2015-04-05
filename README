@@ -1,0 +1,9 @@
+README
+
+Basic algorithm:
+	- each pixel has its own station and set of taxis (taxis must be returned to that pixel at the end of the day)
+	- basically same as 467 algorithm, except applied over multiple pixels
+
+
+Expanded algorithm:
+	- each pixel doesn't have it's own station, 
