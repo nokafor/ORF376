@@ -38,17 +38,54 @@ public class Analysis {
 		int count = 1;
 		int totalTaxis = 0;
 		for (Station station : stations) {
-			countyStations = station.minimizeDepartures(countyStations);
-			System.out.println("checkpoint " + count);
+			System.out.println("checkpoint #" + count);
 			int taxis = station.dTaxis.size();
-			System.out.println(taxis);
+			// System.out.println("Before: " + taxis);
+			countyStations = station.minimizeDepartures(countyStations);
+			taxis = station.dTaxis.size();
+			// System.out.println("After: " + taxis);
 			totalTaxis += taxis;
 			count++;
-			System.out.println();
+			// System.out.println();
 		}
 
 		System.out.println("Total # taxis: " + totalTaxis);
 
+		// RESET
+		 count = 1;
+		 totalTaxis = 0;
+		 for (Station station : stations) {
+		 	System.out.println("checkpoint #" + count + ".2");
+		 	int taxis = station.dTaxis.size();
+		 	// System.out.println("Before: " + taxis);
+		 	countyStations = station.findNearby(countyStations);
+		 	taxis = station.dTaxis.size();
+		 	// System.out.println("After: " + taxis);
+		 	totalTaxis += taxis;
+		 	count++;
+		 	// System.out.println();
+		 }
+
+		System.out.println("Total # taxis: " + totalTaxis);
+
+		// RESET
+		count = 1;
+		totalTaxis = 0;
+		for (Station station : countyStations) {
+			// TreeSet<Taxi> finalTaxis = new TreeSet<Taxi>();
+			countyStations = station.cycleDepartures(countyStations);
+		 	System.out.println("checkpoint #" + count + ".3");
+
+			// System.out.println(finalTaxis.size());
+			System.out.println(station.dTaxis.size());
+			// totalTaxis += finalTaxis.size();
+			totalTaxis += station.dTaxis.size();
+			count++;
+		}
+
+		System.out.println("Total # taxis: " + totalTaxis);
+
+		// System.out.println("Total # taxis: " + totalTaxis);
 		//countyStations = first.minimizeDepartures(countyStations);
 		//System.out.println(first.dTaxis.size());
 
@@ -108,8 +145,10 @@ public class Analysis {
 					// check and see if this station is within range of any of the other stations
 					for (Station s : countyStations) {
 						if (s.withinRange(station)) {
-							station.add(s.center());
-							s.add(station.center());
+							if (!station.pixels.contains(s.center()))
+								station.add(s.center());
+							if (!s.pixels.contains(station.center()))
+								s.add(station.center());
 						}
 					}
 				}
@@ -175,14 +214,16 @@ public class Analysis {
 					// each trip gets assigned its own taxi, and each taxi has an origin station
 					taxi.addTrip(trip);	
 
-					// make sure to add taxi to saved station, and save where trip departs to
+					// make sure to add taxi to saved station, and save where trip arrives from
 					station.addArrival(taxi, trip.originPixel());
 
 					// check and see if this station is within range of any of the other stations
 					for (Station s : countyStations) {
 						if (s.withinRange(station)) {
-							station.add(s.center());
-							s.add(station.center());
+							if (!station.pixels.contains(s.center()))
+								station.add(s.center());
+							if (!s.pixels.contains(station.center()))
+								s.add(station.center());
 						}
 					}
 

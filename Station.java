@@ -23,7 +23,7 @@ public class Station {
 		departures = new HashMap<String, List<Double>>();
 	}
 
-	public void cycleDepartures() {
+	private TreeSet<Taxi> cycleDepartures() {
 		TreeMap<Double, TreeSet<Taxi>> returnTimes = new TreeMap<Double, TreeSet<Taxi>>();
 		TreeSet<Taxi> fTaxis = new TreeSet<Taxi>();
 
@@ -46,7 +46,7 @@ public class Station {
 
 				// return time = arrival time + the time it takes to make the trip back
 				double returnTime = d.endTime() + (60 * 1.2 * trip.tripMiles() / 30);
-				
+
 				// update the departure taxi
 				d.updateReturn(returnTime);
 				d.updateEmptyMiles(trip.tripMiles());
@@ -109,8 +109,14 @@ public class Station {
 
 			rTaxis.add(d);
 			returnTimes.put(d.returnTime(), rTaxis);
-			
+
 		}
+		return fTaxis;
+	}
+
+	public List<Station> cycleDepartures(List<Station> countyStations) {
+		dTaxis = cycleDepartures();
+		return countyStations;
 	}
 
 	private Double getAcceptableArrival(String pixel, double dTime, double offset) {
@@ -126,6 +132,116 @@ public class Station {
 		return null;
 	}
 
+	private Double getAcceptableNearbyArrival(Station nStation, String pixel, double dTime, double offset) {
+		List<Double> aTimes = nStation.arrivals.get(pixel);
+		// System.out.println(pixel);
+		// System.out.println(dTime);
+		// System.out.println("Size: "+ aTimes.size());
+		// System.out.println("offset: " + offset);
+		for (double time : aTimes) {
+			// System.out.println("dTime: " + dTime + " vs aTime: " + time);
+			// if within the acceptable range
+			if (time <= dTime && time >= (dTime - offset)) { 
+				// System.out.println();
+				return time;
+			}
+		}
+		// System.out.println();
+		return null;
+	}
+
+	public List<Station> findNearby(List<Station> countyStations) {
+		Set<String> dPixels = departures.keySet();
+		// System.out.println(dPixels.size());
+		// for each pixel to which we depart
+		for (String pixel : dPixels) {
+			// check the nearby pixels / get the nearby station
+			for (String nPixel : pixels) {
+				String[] coord = nPixel.split(", ");
+				int i = Integer.parseInt(coord[0]);
+				int j = Integer.parseInt(coord[1]);
+
+				Station nStation = null;
+				if (countyStations.contains(new Station(i, j))) {
+					// find endpoint station
+					nStation = countyStations.get(countyStations.indexOf(new Station(i, j)));
+				}
+				else continue;
+				// System.out.println("checkpoint: "+ pixel + " vs " + nPixel);
+				// System.out.println("Times:");
+				// System.out.println("=======");
+
+				// if a nearby station has an arrival from the same pixel
+				if (nStation.arrivals.containsKey(pixel)) {
+					// System.out.println("contains pixel as arrival");
+					// compare the departure and arrival times to see if any can be deleted
+					for (double dTime : departures.get(pixel)) {
+						Double time = getAcceptableNearbyArrival(nStation, pixel, dTime, 600-timeTo(nPixel));
+
+						// if an acceptable arrival has been found
+						if (time != null) {
+							// System.out.println("checkpoint2");
+							//find departing taxi to be deleted
+							Taxi d = null;
+							for (Taxi taxi : nStation.dTaxis) {
+								if (taxi.startTime() == dTime) {
+									d = taxi;
+									break;
+								}
+							}
+							if (d == null) continue;
+
+							// delete the arrival time from nearby station, so that it won't be found again
+							List<Double> aTimes = nStation.arrivals.get(pixel);
+							aTimes.remove(time);
+							nStation.arrivals.put(pixel, aTimes);
+
+							// if intracounty trip
+							coord = pixel.split(", ");
+							if (countyStations.contains(new Station(Integer.parseInt(coord[0]), Integer.parseInt(coord[1])))) {
+								// find endpoint station
+								Station dest = countyStations.get(countyStations.indexOf(new Station(Integer.parseInt(coord[0]), Integer.parseInt(coord[1]))));
+
+								// delete the previously expected arrival time in the endpoint station (may or may not delete this)
+								List<Double> times = dest.arrivals.get(new String(cx + ", " + cy));
+								//if (times != null) {
+									times.remove(d.endTime());
+									dest.arrivals.put(new String(cx + ", " + cy), times);
+								//}
+
+								// delete previously expected arrival taxi in endpoint station
+								Taxi a = null;
+								for (Taxi aTaxi : dest.aTaxis) {
+									if (aTaxi.startTime() == dTime) {
+										a = aTaxi;
+										break;
+									}
+								}
+								dest.aTaxis.remove(a);
+
+								// find the dTaxi that corresponds with arrival to this station
+								a = null;
+								for (Taxi dTaxi : dest.dTaxis) {
+									if (dTaxi.endTime() == time) {
+										a = dTaxi;
+										break;
+									}
+								}
+
+								// update the taxis return time
+								if (a != null) a.updateReturn(d.endTime());
+
+							}
+
+							// delete the departure in nearby station
+							nStation.dTaxis.remove(d);
+						}
+					}
+				}
+			}
+		}
+		return countyStations;
+	}
 	public List<Station> minimizeDepartures(List<Station> countyStations) {
 		// offset = 600 - timeTo station
 		Set<String> dPixels = departures.keySet();
@@ -136,10 +252,6 @@ public class Station {
 
 					// if an acceptable arrival has been found
 					if (time != null) {
-						// delete the arrival time from this station, so that it won't be found again
-						List<Double> aTimes = arrivals.get(pixel);
-						aTimes.remove(time);
-						arrivals.put(pixel, aTimes);
 
 						//find departing taxi to be deleted
 						Taxi d = null;
@@ -151,7 +263,12 @@ public class Station {
 						}
 						if (d == null) continue;
 
-						// if intrapixel trip
+						// delete the arrival time from this station, so that it won't be found again
+						List<Double> aTimes = arrivals.get(pixel);
+						aTimes.remove(time);
+						arrivals.put(pixel, aTimes);
+
+						// if intracounty trip
 						String[] coord = pixel.split(", ");
 						if (countyStations.contains(new Station(Integer.parseInt(coord[0]), Integer.parseInt(coord[1])))) {
 							// find endpoint station
@@ -161,7 +278,7 @@ public class Station {
 							List<Double> times = dest.arrivals.get(new String(cx + ", " + cy));
 							//if (times != null) {
 								times.remove(d.endTime());
-								dest.arrivals.put(pixel, times);
+								dest.arrivals.put(new String(cx + ", " + cy), times);
 							//}
 
 							// delete previously expected arrival taxi in endpoint station
@@ -198,12 +315,22 @@ public class Station {
 		return countyStations;
 	}
 
+	public double timeTo(String pixel) {
+		String[] coord = pixel.split(", ");
+		int i = Integer.parseInt(coord[0]);
+		int j = Integer.parseInt(coord[1]);
+
+		double cartesianDistance = Math.sqrt(Math.pow(cx-i, 2) + Math.pow(cy-j, 2));
+		double time = 60 * 1.2 * cartesianDistance / 30; // returns time in minutes
+
+		return time*60; // return time in seconds
+	}
 	public boolean withinRange(int i, int j) {
 		// if (i < 0 || j < 0) throw new OutOfBoundsException();
 		double cartesianDistance = Math.sqrt(Math.pow(cx-i, 2) + Math.pow(cy-j, 2));
 		double time = 60 * 1.2 * cartesianDistance / 30;
 
-		return (time <= 2.5); // radius of circle = 2.5min, so that diameter = 5min
+		return (time <= 10); // radius of circle = 2.5min, so that diameter = 5min
 	}
 
 	public boolean withinRange(Station that) {

@@ -7,7 +7,7 @@ public class Taxi implements Comparable {
 	private double endTime;
 	private double returnTime;
 	private double emptyMiles;
-	private List<Trip> trips;	
+	private List<Trip> trips;
 
 	public Taxi(int tripSize) {
 		maxSize = tripSize;
@@ -25,12 +25,18 @@ public class Taxi implements Comparable {
 	}
 
 	public void combine(Taxi t) {
-		
+		if (t.size() < this.size()) {
+			System.out.println("size inconsistency");
+			return;
+		}
+		for (Trip trip: t.trips()) {
+			this.addTrip(trip);
+		}
 	}
 
 	public void addTrip(Trip trip) {
 		if (trip.size() > maxSize) return; // if trip size is too big for taxi...
-		
+
 		trips.add(trip);
 
 		// update the start time of taxi, if needed
@@ -72,6 +78,7 @@ public class Taxi implements Comparable {
 		return trips.contains(trip);
 	}
 
+	//compare starttime with another taxi
 	public int compareTo(Object obj) {
 		Taxi other = (Taxi) obj;
 		return ((Double)startTime).compareTo(other.startTime());
