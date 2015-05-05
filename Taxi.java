@@ -32,10 +32,11 @@ public class Taxi implements Comparable {
 		for (Trip trip: t.trips()) {
 			this.addTrip(trip);
 		}
+		emptyMiles += t.emptyMiles;
 	}
 
 	public void addTrip(Trip trip) {
-		if (trip.size() > maxSize) return; // if trip size is too big for taxi...
+		// if (trip.size() > maxSize) return; // if trip size is too big for taxi...
 
 		trips.add(trip);
 
@@ -90,5 +91,17 @@ public class Taxi implements Comparable {
 
 	public List<Trip> trips() {
 		return trips;
+	}
+
+	public double emptyMiles() {
+		return emptyMiles;
+	}
+
+	public double vehicleMiles() {
+		double vehicleMiles = 0;
+		for (Trip trip : trips) {
+			vehicleMiles += trip.tripMiles();
+		}
+		return vehicleMiles;
 	}
 }

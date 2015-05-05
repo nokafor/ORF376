@@ -9,9 +9,13 @@ public class Analysis {
 	private static int Y;
 
 	public static void main(String[] args) {
-		getDepartures(args[0]);
-		getArrivals(args[1]);
-		System.out.println(countyStations.size());
+		for (int i = 0; i < args.length/2; i++) {
+			getDepartures(args[i]);
+		}
+		for (int i = args.length/2; i < args.length; i++) {
+			getArrivals(args[i]);
+		}
+		// System.out.println(countyStations.size());
 
 		// Station first = countyStations.get(0);
 		// System.out.println(first.center());
@@ -37,25 +41,32 @@ public class Analysis {
 
 		int count = 1;
 		int totalTaxis = 0;
+		int totalTrips = 0;
 		for (Station station : stations) {
-			System.out.println("checkpoint #" + count);
+			// System.out.println("checkpoint #" + count);
 			int taxis = station.dTaxis.size();
+			totalTrips += taxis;
+			station.initEmpty();
+			// totalTaxis += station.emptyMiles;
+			// totalTaxis += station.aTaxis.size();
 			// System.out.println("Before: " + taxis);
 			countyStations = station.minimizeDepartures(countyStations);
 			taxis = station.dTaxis.size();
 			// System.out.println("After: " + taxis);
-			totalTaxis += taxis;
+			// totalTaxis += taxis;
 			count++;
 			// System.out.println();
 		}
 
-		System.out.println("Total # taxis: " + totalTaxis);
+		// System.out.println("Total # taxis: " + totalTaxis);
+		System.out.println("Taxis if every trip had its own taxi: " + totalTrips);
+		// System.out.println("Initial empty miles (= initial vehicle miles): " + totalTaxis);
 
 		// RESET
 		 count = 1;
 		 totalTaxis = 0;
 		 for (Station station : stations) {
-		 	System.out.println("checkpoint #" + count + ".2");
+		 	// System.out.println("checkpoint #" + count + ".2");
 		 	int taxis = station.dTaxis.size();
 		 	// System.out.println("Before: " + taxis);
 		 	countyStations = station.findNearby(countyStations);
@@ -66,24 +77,31 @@ public class Analysis {
 		 	// System.out.println();
 		 }
 
-		System.out.println("Total # taxis: " + totalTaxis);
+		// System.out.println("Total # taxis: " + totalTaxis);
 
 		// RESET
 		count = 1;
 		totalTaxis = 0;
+		int totalVehMiles = 0;
+		int totalEmpMiles = 0;
 		for (Station station : countyStations) {
 			// TreeSet<Taxi> finalTaxis = new TreeSet<Taxi>();
 			countyStations = station.cycleDepartures(countyStations);
-		 	System.out.println("checkpoint #" + count + ".3");
+		 	// System.out.println("checkpoint #" + count + ".3");
 
 			// System.out.println(finalTaxis.size());
-			System.out.println(station.dTaxis.size());
+			// System.out.println(station.dTaxis.size());
 			// totalTaxis += finalTaxis.size();
 			totalTaxis += station.dTaxis.size();
+			totalVehMiles += station.totalVehicleMiles();
+			totalEmpMiles += station.totalEmptyMiles();
 			count++;
 		}
 
-		System.out.println("Total # taxis: " + totalTaxis);
+		System.out.println("Final # taxis: " + totalTaxis);
+		System.out.println("Total Vehicle Miles: " + totalVehMiles);
+		System.out.println("Total Empty Vehicle Miles: " + totalEmpMiles);
+
 
 		// System.out.println("Total # taxis: " + totalTaxis);
 		//countyStations = first.minimizeDepartures(countyStations);
@@ -98,6 +116,7 @@ public class Analysis {
 		try {
 			String line;
 			reader = new BufferedReader(new FileReader(fileName));
+			line = reader.readLine(); // read the header line
 
 			while ((line = reader.readLine()) != null) {
 				String[] rawData = line.split(","); //split the data			
@@ -164,7 +183,7 @@ public class Analysis {
 			}
 		}
 
-		System.out.println("checkpoint1");
+		// System.out.println("checkpoint1");
 	}
 
 
@@ -174,6 +193,7 @@ public class Analysis {
 		try {
 			String line;
 			reader = new BufferedReader(new FileReader(fileName));
+			line = reader.readLine(); // read the header line
 
 			while ((line = reader.readLine()) != null) {
 				String[] rawData = line.split(","); //split the data			
@@ -241,6 +261,6 @@ public class Analysis {
 			}
 		}
 
-		System.out.println("checkpoint2");
+		// System.out.println("checkpoint2");
 	}
 }

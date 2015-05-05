@@ -11,6 +11,8 @@ public class Station {
 	Map<String, List<Double>> arrivals;
 	Map<String, List<Double>> departures;
 
+	double emptyMiles;
+
 	public Station(int i, int j) {
 		cx = i;
 		cy = j;
@@ -23,6 +25,11 @@ public class Station {
 		departures = new HashMap<String, List<Double>>();
 	}
 
+	public void initEmpty() {
+		for (Taxi d : dTaxis) {
+			emptyMiles += d.vehicleMiles();
+		}
+	}
 	private TreeSet<Taxi> cycleDepartures() {
 		TreeMap<Double, TreeSet<Taxi>> returnTimes = new TreeMap<Double, TreeSet<Taxi>>();
 		TreeSet<Taxi> fTaxis = new TreeSet<Taxi>();
@@ -37,6 +44,7 @@ public class Station {
 				}
 				returns.add(d);
 				returnTimes.put(d.returnTime(), returns);
+				// System.out.println("checkpoint");
 			}
 
 			// if taxis return hasnt been accounted for yet
@@ -49,7 +57,7 @@ public class Station {
 
 				// update the departure taxi
 				d.updateReturn(returnTime);
-				d.updateEmptyMiles(trip.tripMiles());
+				// d.updateEmptyMiles(trip.tripMiles());
 
 				// update list of return times
 				TreeSet<Taxi> returns = returnTimes.get(d.returnTime());
@@ -228,13 +236,24 @@ public class Station {
 									}
 								}
 
-								// update the taxis return time
-								if (a != null) a.updateReturn(d.endTime());
+								// update the taxis return time and empty miles
+								if (a != null) {
+									a.updateReturn(d.endTime());
+									a.updateEmptyMiles(distanceTo(nStation)); //taxi is empty between the two stations before making the trip
+
+									// update object
+									dest.dTaxis.remove(a);
+									dest.dTaxis.add(a);
+								}
+
+								// update empty miles in other station
+								dest.emptyMiles = dest.emptyMiles - d.vehicleMiles(); // works because each taxi still only has one trip
 
 							}
 
 							// delete the departure in nearby station
 							nStation.dTaxis.remove(d);
+							nStation.emptyMiles = nStation.emptyMiles - d.vehicleMiles();
 						}
 					}
 				}
@@ -289,7 +308,7 @@ public class Station {
 									break;
 								}
 							}
-							dest.aTaxis.remove(a);
+							if (a != null) dest.aTaxis.remove(a);
 
 							// find the dTaxi that corresponds with arrival to this station
 							a = null;
@@ -301,12 +320,22 @@ public class Station {
 							}
 
 							// update the taxis return time
-							if (a != null) a.updateReturn(d.endTime());
+							if (a != null) {
+								a.updateReturn(d.endTime());
+								// System.out.println("checkpoint");
+								// update object
+								dest.dTaxis.remove(a);
+								dest.dTaxis.add(a);
+							}
+
+							// update empty miles in other station
+							dest.emptyMiles = dest.emptyMiles - d.vehicleMiles(); // works because every taxi only has one trip
 
 						}
 
 						// delete the departure in this station
 						dTaxis.remove(d);
+						emptyMiles = emptyMiles - d.vehicleMiles();
 					}
 				}
 			}
@@ -324,6 +353,10 @@ public class Station {
 		double time = 60 * 1.2 * cartesianDistance / 30; // returns time in minutes
 
 		return time*60; // return time in seconds
+	}
+	public double distanceTo(Station nStation) {
+		double cartesianDistance = Math.sqrt(Math.pow(cx-nStation.cx, 2) + Math.pow(cy-nStation.cy, 2));
+		return cartesianDistance * 1.2;
 	}
 	public boolean withinRange(int i, int j) {
 		// if (i < 0 || j < 0) throw new OutOfBoundsException();
@@ -396,6 +429,18 @@ public class Station {
 
 	public String center() {
 		return new String(cx + ", " + cy);
+	}
+
+	public double totalVehicleMiles() {
+		double vehicleMiles = 0;
+		for (Taxi t : dTaxis) {
+			vehicleMiles += t.vehicleMiles();
+		}
+		return vehicleMiles;
+	}
+
+	public double totalEmptyMiles() {
+		return emptyMiles;
 	}
 
 	public static void main(String[] args) {
